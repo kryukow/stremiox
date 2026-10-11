@@ -6,6 +6,9 @@ struct AddonsView: View {
     @EnvironmentObject private var account: StremioAccount
     @EnvironmentObject private var core: CoreBridge
     @EnvironmentObject private var theme: ThemeManager
+    #if STREMIOX_RUSSIAN_UI
+    @State private var showSignIn = false
+    #endif
 
     var body: some View {
         NavigationStack {
@@ -14,6 +17,10 @@ struct AddonsView: View {
                     Text("Add-ons").screenTitleStyle()
                     if !account.isSignedIn {
                         hint("Sign in to manage your add-ons. They sync from the Stremio web or mobile app.")
+                        #if STREMIOX_RUSSIAN_UI
+                        Button("Войти в Stremio") { showSignIn = true }
+                            .buttonStyle(PrimaryActionStyle())
+                        #endif
                     } else if core.addons.isEmpty {
                         hint("No add-ons found on your account yet. Install them from the Stremio web or mobile app and they will sync down on next launch.")
                     } else {
@@ -25,6 +32,9 @@ struct AddonsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(Theme.Palette.canvas.ignoresSafeArea())
+            #if STREMIOX_RUSSIAN_UI
+            .sheet(isPresented: $showSignIn) { iOSSignInView() }
+            #endif
         }
     }
 
@@ -53,7 +63,7 @@ struct AddonsView: View {
     }
 
     private func hint(_ text: String) -> some View {
-        Text(text)
+        Text(text.localizedUI)
             .font(Theme.Typography.body)
             .foregroundStyle(Theme.Palette.textSecondary)
             .frame(maxWidth: 820, alignment: .leading)

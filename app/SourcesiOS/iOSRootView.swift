@@ -23,6 +23,23 @@ struct iOSRootView: View {
             }
         }
 
+        /// Short labels for seven equally spaced iPhone tabs. Full titles stay in VoiceOver.
+        var compactTitle: String {
+            #if STREMIOX_RUSSIAN_UI
+            switch self {
+            case .home: return "Главная"
+            case .discover: return "Обзор"
+            case .live: return "Эфир"
+            case .library: return "Моё"
+            case .search: return "Поиск"
+            case .addons: return "Плагины"
+            case .settings: return "Опции"
+            }
+            #else
+            return title
+            #endif
+        }
+
         var icon: String {
             switch self {
             case .home: return "house.fill"
@@ -119,7 +136,7 @@ struct iOSRootView: View {
                             Capsule().fill(Theme.Palette.accent.opacity(0.18))
                         }
                     }
-                Text(item.title)
+                Text(item.compactTitle)
                     .font(.system(size: 11, weight: selected ? .semibold : .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -130,7 +147,7 @@ struct iOSRootView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(item.title)
+        .accessibilityLabel(item.title.localizedUI)
         .accessibilityHint("Switches to \(item.title) tab")
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
@@ -423,10 +440,24 @@ struct iOSSearchView: View {
                 LazyVStack(alignment: .leading, spacing: Theme.Space.lg) {
                     // Stremio's "paste a link" feature, at the top like tvOS.
                     Button { showOpenLink = true } label: {
-                        Label(directLinksOnly ? "Play a direct link" : "Play a link or magnet", systemImage: "link")
+                        Label(PlaybackSettings.directLinksOnly ? "Play a direct link" : "Play a link or magnet", systemImage: "link")
                     }
                     .buttonStyle(ChipButtonStyle(selected: false))
                     .padding(.horizontal, Theme.Space.md)
+
+                    #if STREMIOX_NO_EMBEDDED_SERVER
+                    // Public HLS fixture: proves decoding/network/controls work without relying on
+                    // any third-party stream add-on, movie subscription or peer-to-peer transport.
+                    Button {
+                        if let url = URL(string: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8") {
+                            pastedPlayer = iOSPlayerLaunch(url: url, title: "Тестовый видеопоток · HLS")
+                        }
+                    } label: {
+                        Label("Проверить видеоплеер (HLS)", systemImage: "play.rectangle.on.rectangle")
+                    }
+                    .buttonStyle(ChipButtonStyle(selected: false))
+                    .padding(.horizontal, Theme.Space.md)
+                    #endif
 
                     results
                 }
@@ -791,12 +822,12 @@ private struct iOSOpenLinkView: View {
             Text("Play a link")
                 .font(Theme.Typography.sectionTitle)
                 .foregroundStyle(Theme.Palette.textPrimary)
-            Text(directLinksOnly
+            Text(PlaybackSettings.directLinksOnly
                  ? "A direct video URL (mp4, mkv, m3u8 and friends), a debrid or usenet link your service resolved to http(s)."
                  : "A direct video URL (mp4, mkv, m3u8 and friends), a debrid or usenet link your service resolved to http(s), or a magnet link.")
                 .font(Theme.Typography.body)
                 .foregroundStyle(Theme.Palette.textSecondary)
-            TextField(directLinksOnly ? "https://..." : "https://...  or  magnet:?xt=...", text: $input)
+            TextField(PlaybackSettings.directLinksOnly ? "https://..." : "https://...  or  magnet:?xt=...", text: $input)
                 .font(Theme.Typography.body)
                 .disableAutocorrection(true)
                 .textFieldStyle(.roundedBorder)
@@ -808,7 +839,7 @@ private struct iOSOpenLinkView: View {
                     .buttonStyle(ChipButtonStyle(selected: false))
             }
             if let status {
-                Text(status)
+                Text(status.localizedUI)
                     .font(Theme.Typography.label)
                     .foregroundStyle(working ? Theme.Palette.textSecondary : Theme.Palette.danger)
             }
@@ -1003,7 +1034,7 @@ private struct PosterRail: View {
     @EnvironmentObject private var theme: ThemeManager   // observe textScale so Theme.Typography repaints live
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.sm) {
-            Text(title).font(Theme.Typography.cardTitle).foregroundStyle(Theme.Palette.textPrimary)
+            Text(title.localizedUI).font(Theme.Typography.cardTitle).foregroundStyle(Theme.Palette.textPrimary)
                 .padding(.horizontal, Theme.Space.md)
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: Theme.Space.sm) {
@@ -1149,7 +1180,7 @@ extension View {
     /// conditional lives *inside* `@ToolbarContentBuilder` — branching the whole view instead would
     /// change the NavigationStack's structural identity and reset its scroll/path on every tab switch.
     func stremioWordmarkTitle(_ pageTitle: String, isActive: Bool = true) -> some View {
-        navigationTitle(pageTitle)
+        navigationTitle(pageTitle.localizedUI)
             .navigationBarTitleDisplayModeInlineCompat()
             .toolbar {
                 if isActive {
@@ -1204,11 +1235,11 @@ struct ContentUnavailableViewCompat: View {
     var body: some View {
         VStack(spacing: Theme.Space.md) {
             Image(systemName: systemImage).font(.system(size: 48)).foregroundStyle(Theme.Palette.textTertiary)
-            Text(title).font(Theme.Typography.sectionTitle).foregroundStyle(Theme.Palette.textPrimary)
-            Text(message).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
+            Text(title.localizedUI).font(Theme.Typography.sectionTitle).foregroundStyle(Theme.Palette.textPrimary)
+            Text(message.localizedUI).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
                 .multilineTextAlignment(.center)
             if let cta {
-                Button(cta.title, action: cta.action).buttonStyle(PrimaryActionStyle())
+                Button(cta.title.localizedUI, action: cta.action).buttonStyle(PrimaryActionStyle())
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

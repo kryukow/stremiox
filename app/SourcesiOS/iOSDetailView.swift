@@ -109,8 +109,9 @@ struct iOSDetailView: View {
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
+        GeometryReader { viewport in
+            ScrollViewReader { proxy in
+                ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Space.lg) {
                     // Live (tv / channel / events) gets its own stripped-down page BEFORE the movie
                     // fallback: backdrop + name + LIVE badge + the channel's source list, with no VOD
@@ -133,7 +134,8 @@ struct iOSDetailView: View {
                 // Cap the whole detail column to the viewport width and pin it leading, so no single
                 // section (hero, season chips, source rows) can stretch the column wider than the
                 // screen and center it, which clipped every leading element off the left edge.
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(width: viewport.size.width, alignment: .leading)
+            }
             }
         }
         .background(Theme.Palette.canvas.ignoresSafeArea())
@@ -248,18 +250,14 @@ struct iOSDetailView: View {
     /// Full-bleed artwork with the same two scrims tvOS uses: a vertical canvas fade so the lower text
     /// block stays readable, and a leading canvas fade for the title column.
     private var backdrop: some View {
+        GeometryReader { geometry in
         AsyncImage(url: URL(string: meta?.background ?? meta?.poster ?? "")) { phase in
             switch phase {
             case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
             default: Theme.Palette.surface1
             }
         }
-        .frame(height: backdropHeight)
-        // The backdrop is the ZStack's WIDTH ANCHOR: it greedily takes the full viewport width and
-        // pins to the leading edge, so the ZStack's leading edge is the screen's leading edge. Before
-        // this, the oversized serif hero title made the ZStack wider than the screen and `.bottomLeading`
-        // pushed the whole block to a negative x — clipping the title / Watch / synopsis off the left.
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(width: geometry.size.width, height: backdropHeight)
         .clipped()
         .overlay(
             LinearGradient(stops: [
@@ -273,6 +271,8 @@ struct iOSDetailView: View {
             LinearGradient(colors: [Theme.Palette.canvas.opacity(0.6), .clear],
                            startPoint: .leading, endPoint: .center)
         )
+        }
+        .frame(height: backdropHeight)
     }
 
     /// The title block: the addon-provided logo when present (the editorial signature on the tvOS hero),
@@ -312,17 +312,22 @@ struct iOSDetailView: View {
     /// Rating · year · runtime · genres, same order and tokens as tvOS DetailView.metaRow.
     private var metaRow: some View {
         let m = meta
-        return HStack(spacing: Theme.Space.md) {
-            if let imdb = m?.imdbRating {
-                HStack(spacing: 6) {
-                    Image(systemName: "star.fill").foregroundStyle(Theme.Palette.accent)
-                    Text(imdb)
+        return VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            HStack(spacing: Theme.Space.md) {
+                if let imdb = m?.imdbRating {
+                    HStack(spacing: 6) {
+                        Image(systemName: "star.fill").foregroundStyle(Theme.Palette.accent)
+                        Text(imdb)
+                    }
                 }
+                if let r = m?.releaseInfo { Text(r).lineLimit(1) }
+                if let rt = m?.runtime { Text(rt).lineLimit(1) }
             }
-            if let r = m?.releaseInfo { Text(r) }
-            if let rt = m?.runtime { Text(rt) }
             let genres = m?.genres ?? []
-            if !genres.isEmpty { Text(genres.prefix(3).joined(separator: " · ")).lineLimit(1) }
+            if !genres.isEmpty {
+                Text(genres.prefix(3).joined(separator: " · "))
+                    .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .font(Theme.Typography.label)
         .foregroundStyle(Theme.Palette.textSecondary)
@@ -344,30 +349,35 @@ struct iOSDetailView: View {
     /// resume episode is partially watched), then the trailer + library chips — the touch/Mac twin
     /// of the tvOS series hero. Tapping it pushes that episode's source list (the same screen an
     /// episode-row tap opens), so the user still picks the source.
+    /// Two-row responsive actions: the primary Play button never competes for width
+    /// with the trailer and library controls on compact iPhones.
     @ViewBuilder private var seriesHeroActions: some View {
         let primary = meta?.videos.flatMap { seriesPrimaryEpisode($0) }
         let primaryProgress = primary.map { episodeProgress($0.video) } ?? 0
-        VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            HStack(spacing: Theme.Space.sm) {
-                if let m = meta, let primary {
-                    VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                        NavigationLink {
-                            iOSEpisodeStreams(meta: m, video: primary.video, season: primary.video.season ?? 1)
-                        } label: {
-                            Label(primaryEpisodeLabel(primary.video, isResume: primary.isResume),
-                                  systemImage: "play.fill")
-                        }
-                        .buttonStyle(PrimaryActionStyle())
-                        if primary.isResume, primaryProgress > 0.01 {
-                            iOSProgressStripe(value: primaryProgress)
-                                .frame(width: 160)
-                        }
+        VStack(alignment: .leading, spacing: Theme.Space.sm) {
+            if let m = meta, let primary {
+                VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                    NavigationLink {
+                        iOSEpisodeStreams(meta: m, video: primary.video, season: primary.video.season ?? 1)
+                    } label: {
+                        Label(primaryEpisodeLabel(primary.video, isResume: primary.isResume), systemImage: "play.fill")
                     }
-                    .fixedSize(horizontal: true, vertical: false)
+                    .buttonStyle(PrimaryActionStyle())
+                    if primary.isResume, primaryProgress > 0.01 {
+                        iOSProgressStripe(value: primaryProgress).frame(width: 160)
+                    }
                 }
-                trailerButton
-                iOSLibraryChip()
-                Spacer(minLength: 0)
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: Theme.Space.sm) {
+                    trailerButton
+                    iOSLibraryChip()
+                }
+                .fixedSize(horizontal: true, vertical: false)
+                VStack(alignment: .leading, spacing: Theme.Space.sm) {
+                    trailerButton
+                    iOSLibraryChip()
+                }
             }
         }
         .padding(.top, Theme.Space.xs)
@@ -402,8 +412,8 @@ struct iOSDetailView: View {
     }
 
     private func primaryEpisodeLabel(_ video: CoreVideo, isResume: Bool) -> String {
-        let prefix = isResume ? "Resume" : "Play"
-        guard let season = video.season else { return "\(prefix) Episode \(video.episodeNumber)" }
+        let prefix = isResume ? "Resume".localizedUI : "Play".localizedUI
+        guard let season = video.season else { return "\(prefix) \("Episode".localizedUI) \(video.episodeNumber)" }
         return "\(prefix) S\(season) E\(video.episodeNumber)"
     }
 
@@ -456,7 +466,7 @@ struct iOSDetailView: View {
                     HStack(spacing: Theme.Space.sm) {
                         if preparing { ProgressView().tint(Theme.Palette.onAccent) }
                         else { Image(systemName: "play.fill") }
-                        Text(movieLabel)
+                        Text(movieLabel.localizedUI)
                     }
                 }
                 .buttonStyle(PrimaryActionStyle())
@@ -465,16 +475,24 @@ struct iOSDetailView: View {
 
                 qualityMenu(groups)
             }
-            HStack(spacing: Theme.Space.sm) {
+            // The original horizontal row overflows on portrait iPhone screens.
+            VStack(alignment: .leading, spacing: Theme.Space.sm) {
                 Button { scrollToSources() } label: {
-                    Label(sourceTotal > 0 ? "Sources · \(sourceTotal)" : "Sources",
+                    Label(sourceTotal > 0 ? "\("Sources".localizedUI) · \(sourceTotal)" : "Sources".localizedUI,
                           systemImage: "list.bullet")
                 }
                 .buttonStyle(ChipButtonStyle())
-
-                trailerButton
-                iOSLibraryChip()
-                Spacer(minLength: 0)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: Theme.Space.sm) {
+                        trailerButton
+                        iOSLibraryChip()
+                    }
+                    .fixedSize(horizontal: true, vertical: false)
+                    VStack(alignment: .leading, spacing: Theme.Space.sm) {
+                        trailerButton
+                        iOSLibraryChip()
+                    }
+                }
             }
         }
         .padding(.top, Theme.Space.xs)
@@ -548,7 +566,7 @@ struct iOSDetailView: View {
     private var movieLabel: String {
         if preparing { return "Finding the best source…" }
         guard movieReady, let s = movieBest else { return settleTimedOut ? "No sources found" : "Loading sources…" }
-        return "Watch  ·  \(StreamRanking.qualityLabel(s))"
+        return "\("Watch".localizedUI) · \(StreamRanking.qualityLabel(s))"
     }
 
     private func playMovie() async {
@@ -639,15 +657,15 @@ struct iOSDetailView: View {
     /// One EPG row: an eyebrow tag (NOW / NEXT), the program title, and an optional time detail.
     private func epgRow(eyebrow: String, title: String, detail: String?) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: Theme.Space.sm) {
-            Text(eyebrow)
+            Text(eyebrow.localizedUI)
                 .font(Theme.Typography.eyebrow).tracking(1.5)
                 .foregroundStyle(Theme.Palette.accent)
-            Text(title)
+            Text(title.localizedUI)
                 .font(Theme.Typography.label)
                 .foregroundStyle(Theme.Palette.textPrimary)
                 .lineLimit(1)
             if let detail {
-                Text(detail)
+                Text(detail.localizedUI)
                     .font(Theme.Typography.label)
                     .foregroundStyle(Theme.Palette.textSecondary)
                     .lineLimit(1)
@@ -846,7 +864,7 @@ struct iOSDetailView: View {
             .sorted { $0.episodeNumber < $1.episodeNumber }
     }
 
-    private func seasonLabel(_ s: Int) -> String { s == 0 ? "Specials" : "Season \(s)" }
+    private func seasonLabel(_ s: Int) -> String { s == 0 ? "Specials".localizedUI : "\("Season".localizedUI) \(s)" }
 
     // MARK: Shared
 
@@ -906,7 +924,8 @@ struct iOSEpisodeStreams: View {
     }
 
     var body: some View {
-        ScrollView {
+        GeometryReader { viewport in
+            ScrollView {
             VStack(alignment: .leading, spacing: Theme.Space.lg) {
                 hero
                 iOSSourceList(
@@ -920,7 +939,8 @@ struct iOSEpisodeStreams: View {
                 .padding(.horizontal, Theme.Space.md)
             }
             .padding(.bottom, Theme.Space.xl)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(width: viewport.size.width, alignment: .leading)
+            }
         }
         .background(Theme.Palette.canvas.ignoresSafeArea())
         .navigationTitle(video.episodeTitle)
@@ -991,15 +1011,15 @@ struct iOSEpisodeStreams: View {
     }
 
     private var backdrop: some View {
+        GeometryReader { geometry in
         AsyncImage(url: URL(string: video.thumbnail ?? meta.background ?? meta.poster ?? "")) { phase in
             switch phase {
             case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
             default: Theme.Palette.surface1
             }
         }
-        .frame(height: backdropHeight)
-        // Width anchor for the episode hero ZStack — full viewport width, pinned leading (see iOSDetailView.backdrop).
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // Bound the resizable image to the actual viewport, not its unconstrained aspect-fill width.
+        .frame(width: geometry.size.width, height: backdropHeight)
         .clipped()
         .overlay(
             LinearGradient(stops: [
@@ -1013,21 +1033,28 @@ struct iOSEpisodeStreams: View {
             LinearGradient(colors: [Theme.Palette.canvas.opacity(0.6), .clear],
                            startPoint: .leading, endPoint: .center)
         )
+        }
+        .frame(height: backdropHeight)
     }
 
     private var metaRow: some View {
-        HStack(spacing: Theme.Space.md) {
-            Text("S\(season) · E\(video.episode ?? 0)")
-            if let released = video.released, released.count >= 10 { Text(String(released.prefix(10))) }
-            if let rt = meta.runtime { Text(rt) }
-            if let imdb = meta.imdbRating {
-                HStack(spacing: 6) {
-                    Image(systemName: "star.fill").foregroundStyle(Theme.Palette.accent)
-                    Text(imdb)
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            HStack(spacing: Theme.Space.md) {
+                Text("S\(season) · E\(video.episode ?? 0)")
+                if let released = video.released, released.count >= 10 { Text(String(released.prefix(10))) }
+                if let rt = meta.runtime { Text(rt).lineLimit(1) }
+                if let imdb = meta.imdbRating {
+                    HStack(spacing: 6) {
+                        Image(systemName: "star.fill").foregroundStyle(Theme.Palette.accent)
+                        Text(imdb)
+                    }
                 }
             }
             let genres = meta.genres
-            if !genres.isEmpty { Text(genres.prefix(3).joined(separator: " · ")).lineLimit(1) }
+            if !genres.isEmpty {
+                Text(genres.prefix(3).joined(separator: " · "))
+                    .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .font(Theme.Typography.label)
         .foregroundStyle(Theme.Palette.textSecondary)
@@ -1087,10 +1114,10 @@ private struct iOSRailHeader: View {
     let title: String
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(eyebrow.uppercased())
+            Text(eyebrow.localizedUI.uppercased())
                 .font(Theme.Typography.eyebrow).tracking(1.5)
                 .foregroundStyle(Theme.Palette.accent)
-            Text(title)
+            Text(title.localizedUI)
                 .font(Theme.Typography.sectionTitle)
                 .foregroundStyle(Theme.Palette.textPrimary)
         }
@@ -1361,8 +1388,13 @@ struct iOSSourceList: View {
 
     private var eyebrow: String {
         let count = streamCount
+        #if STREMIOX_RUSSIAN_UI
+        if count == 0 { return loading ? "Поиск" : "Не найдено" }
+        return loading ? "Найдено: \(count)" : "Источников: \(count)"
+        #else
         if count == 0 { return loading ? "Searching" : "None found" }
         return loading ? "\(count) so far" : "\(count) source\(count == 1 ? "" : "s")"
+        #endif
     }
 }
 
@@ -1406,7 +1438,7 @@ private struct iOSStreamLabel: View {
                 // One trimmed human-readable line for context (the release title), collapsed to a
                 // single line so a verbose multi-line add-on blurb can't bloat the row.
                 if let title = cleanTitle {
-                    Text(title)
+                    Text(title.localizedUI)
                         .font(Theme.Typography.label)
                         .foregroundStyle(Theme.Palette.textSecondary)
                         .lineLimit(1).truncationMode(.middle)
@@ -1443,7 +1475,7 @@ private struct iOSLoadingRow: View {
     var body: some View {
         HStack(spacing: Theme.Space.sm) {
             ProgressView().tint(Theme.Palette.accent)
-            Text(text).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
+            Text(text.localizedUI).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
             Spacer(minLength: 0)
         }
         .padding(Theme.Space.md)
@@ -1458,7 +1490,7 @@ private struct iOSEmptyRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.sm) {
             Image(systemName: "exclamationmark.triangle").foregroundStyle(Theme.Palette.textTertiary)
-            Text(text).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
+            Text(text.localizedUI).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
             Spacer(minLength: 0)
         }
         .padding(Theme.Space.md)

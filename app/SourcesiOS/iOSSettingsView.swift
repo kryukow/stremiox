@@ -165,7 +165,7 @@ struct iOSSettingsView: View {
             if account.isSignedIn {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(account.email ?? "Signed in")
-                    Text("\(account.addons.count) add-ons · \(account.streamAddonBases.count) stream sources")
+                    Text("\(account.addons.count) доп. · \(account.streamAddonBases.count) источников")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
@@ -197,7 +197,7 @@ struct iOSSettingsView: View {
                     .tint(Theme.Palette.accent)
             }
             Picker("Audio output", selection: $audioOutput) {
-                ForEach(AudioOutputMode.allCases, id: \.rawValue) { Text($0.label).tag($0.rawValue) }
+                ForEach(AudioOutputMode.allCases, id: \.rawValue) { Text($0.label.localizedUI).tag($0.rawValue) }
             }
         } header: {
             Text("Playback")
@@ -206,7 +206,7 @@ struct iOSSettingsView: View {
                 Text(PlaybackSettings.directLinksOnlyForced
                      ? "This build does not bundle the torrent engine. Only direct and debrid links can play."
                      : "Hide torrent and magnet sources. Only direct and debrid links will play.")
-                Text(AudioOutputMode(rawValue: audioOutput)?.detail ?? "")
+                Text((AudioOutputMode(rawValue: audioOutput)?.detail ?? "").localizedUI)
             }
         }
     }
@@ -237,11 +237,11 @@ struct iOSSettingsView: View {
                 .tint(Theme.Palette.accent)
 
             if !sourcePrefs.useAddonOrder {
-                ForEach(Array(sourcePrefs.typeOrder.enumerated()), id: \.element) { index, sourceType in
+                ForEach(Array(sourcePrefs.typeOrder.enumerated()).filter { !PlaybackSettings.torrentsDisabled || $0.element != .torrent }, id: \.element) { index, sourceType in
                     HStack(spacing: 12) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(sourceType.label)
-                            Text(sourceType.detail)
+                            Text(sourceType.label.localizedUI)
+                            Text(sourceType.detail.localizedUI)
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -287,9 +287,9 @@ struct iOSSettingsView: View {
         Section {
             HStack(spacing: Theme.Space.sm) {
                 Circle().fill(serverColor).frame(width: 12, height: 12)
-                Text(serverText)
+                Text(serverText.localizedUI)
                 Spacer()
-                Text(serverBadgeText)
+                Text(serverBadgeText.localizedUI)
                     .font(.caption2.weight(.bold))
                     .tracking(1)
                     .padding(.horizontal, 8).padding(.vertical, 3)
@@ -409,7 +409,7 @@ struct iOSSettingsView: View {
             // iOS we bind native Pickers to the SAME ThemeManager state (accentID, oled).
             Picker("Accent", selection: $theme.accentID) {
                 ForEach(ThemeManager.accents) { accent in
-                    Text(accent.label).tag(accent.id)
+                    Text(accent.label.localizedUI).tag(accent.id)
                 }
             }
             Picker("Background", selection: $theme.oled) {
@@ -453,16 +453,16 @@ struct iOSSettingsView: View {
             // without this the 2nd+ pickers' trailing value labels kept the previous accent color
             // (the "not all settings change colour" report, #21 follow-up). The .id forces a rebuild.
             Picker("Audio language", selection: $prefAudioLang) {
-                ForEach(languageOptions, id: \.id) { Text($0.label).tag($0.id) }
+                ForEach(languageOptions, id: \.id) { Text($0.label.localizedUI).tag($0.id) }
             }
             .tint(Theme.Palette.accent).id(theme.accentID)
             Picker("Subtitle language", selection: $prefSubLang) {
-                ForEach(languageOptions, id: \.id) { Text($0.label).tag($0.id) }
+                ForEach(languageOptions, id: \.id) { Text($0.label.localizedUI).tag($0.id) }
             }
             .tint(Theme.Palette.accent).id(theme.accentID)
             Picker("Subtitles", selection: $prefForced) {
                 ForEach(TrackPreferences.ForcedPolicy.allCases, id: \.rawValue) {
-                    Text($0.label).tag($0.rawValue)
+                    Text($0.label.localizedUI).tag($0.rawValue)
                 }
             }
             .tint(Theme.Palette.accent).id(theme.accentID)

@@ -24,6 +24,16 @@ struct StremioXiOSApp: App {
     #endif
 
     init() {
+        #if STREMIOX_RUSSIAN_UI
+        // Russian is the preferred spoken language in this personal build.
+        // Do not overwrite an explicit choice from a previous session.
+        if UserDefaults.standard.string(forKey: TrackPreferences.Key.audio) == nil {
+            UserDefaults.standard.set("ru", forKey: TrackPreferences.Key.audio)
+        }
+        if UserDefaults.standard.string(forKey: TrackPreferences.Key.subtitle) == nil {
+            UserDefaults.standard.set("ru", forKey: TrackPreferences.Key.subtitle)
+        }
+        #endif
         #if !STREMIOX_NO_EMBEDDED_SERVER
         if !PlaybackSettings.torrentsDisabled,
            !ProcessInfo.processInfo.arguments.contains("-stremiox-no-server") {
@@ -65,6 +75,10 @@ struct StremioXiOSApp: App {
                 // Tint the whole scene so system chrome inside separately-presented sheets (SignIn /
                 // OpenLink) and the ProfileEditor cover renders the app accent, not system blue.
                 .tint(Theme.Palette.accent)
+                // The personal Direct build uses Russian by default, independently of the iPhone system UI language.
+                #if STREMIOX_RUSSIAN_UI
+                .environment(\.locale, Locale(identifier: "ru"))
+                #endif
                 // Without a min frame the macOS WindowGroup adopts the root's tiny intrinsic size and
                 // opens as a postage-stamp window; pin a sensible minimum so it can't collapse. (iOS /
                 // iPadOS ignore this — their windows are managed by the system, not content size.)

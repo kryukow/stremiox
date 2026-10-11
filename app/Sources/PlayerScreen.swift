@@ -723,7 +723,7 @@ struct PlayerScreen: View {
             Color.black.opacity(0.92).ignoresSafeArea()
             VStack(spacing: 18) {
                 Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 46)).foregroundStyle(.yellow)
-                Text(sourceHops > 0 ? "Tried \(sourceHops + 1) sources, none worked" : "This source didn't load")
+                Text(sourceHops > 0 ? "Проверено источников: \(sourceHops + 1). Ни один не работает" : "This source didn't load".localizedUI)
                     .font(.title3.weight(.semibold)).foregroundStyle(.white)
                 Text(loadErrorHint).font(.callout).foregroundStyle(.white.opacity(0.75))
                     .multilineTextAlignment(.center).frame(maxWidth: 480).fixedSize(horizontal: false, vertical: true)
@@ -742,7 +742,7 @@ struct PlayerScreen: View {
     }
 
     private var loadErrorHint: String {
-        let base = "It may be uncached on your debrid (still downloading), offline, or an unsupported link. Try another source or go back."
+        let base = "It may be uncached on your debrid (still downloading), offline, or an unsupported link. Try another source or go back.".localizedUI
         return loadErrorMsg.isEmpty ? base : base + "\n\n(\(loadErrorMsg))"
     }
 
@@ -944,7 +944,7 @@ struct PlayerScreen: View {
         Button(action: action) {
             HStack(spacing: 7) {
                 Image(systemName: icon).font(.system(size: 15, weight: .semibold))
-                Text(title).font(.subheadline.weight(.medium))
+                Text(title.localizedUI).font(.subheadline.weight(.medium))
             }
             .foregroundStyle(.white)
         }
@@ -956,7 +956,7 @@ struct PlayerScreen: View {
                 .foregroundStyle(.white).padding(11).background(.black.opacity(0.35), in: Circle())
                 .frame(width: 44, height: 44).contentShape(Circle())   // min 44pt tap target (#30)
         }
-        .accessibilityLabel(label)
+        .accessibilityLabel(label.localizedUI)
     }
 
     // MARK: - Skip intro / outro
@@ -973,7 +973,7 @@ struct PlayerScreen: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "forward.fill")
-                        Text(segment.label).fontWeight(.semibold)
+                        Text(segment.label.localizedUI).fontWeight(.semibold)
                     }
                     .padding(.horizontal, 22).padding(.vertical, 12)
                     .foregroundStyle(Theme.Palette.onAccent)
@@ -1040,7 +1040,7 @@ struct PlayerScreen: View {
             Color.black.opacity(0.4).ignoresSafeArea().onTapGesture { close() }
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Text(p.title).font(.headline).foregroundStyle(.white)
+                    Text(p.title.localizedUI).font(.headline).foregroundStyle(.white)
                     Spacer()
                     Button { close() } label: {
                         Image(systemName: "xmark").font(.system(size: 13, weight: .bold))
@@ -1085,12 +1085,12 @@ struct PlayerScreen: View {
                 if let openPanel = panel { panelRows = rows(for: openPanel) }
             } label: {
                 HStack {
-                    Text(row.label).foregroundStyle(.white).lineLimit(1)
+                    Text(row.label.localizedUI).foregroundStyle(.white).lineLimit(1)
                     Spacer()
                     if row.selected {
                         Image(systemName: "checkmark").foregroundStyle(Theme.Palette.accent)
                     } else if !row.detail.isEmpty {
-                        Text(row.detail).font(.subheadline).foregroundStyle(.white.opacity(0.55)).lineLimit(1)
+                        Text(row.detail.localizedUI).font(.subheadline).foregroundStyle(.white.opacity(0.55)).lineLimit(1)
                     }
                 }
                 .padding(.horizontal).padding(.vertical, 13)
@@ -1200,7 +1200,7 @@ struct PlayerScreen: View {
     private func langName(_ code: String) -> String {
         let c = code.lowercased()
         if c.isEmpty || c == "und" { return "Unknown" }
-        return Locale.current.localizedString(forLanguageCode: c)?.capitalized ?? code.uppercased()
+        return Locale(identifier: "ru_RU").localizedString(forLanguageCode: c)?.capitalized ?? code.uppercased()
     }
 
     // MARK: - Source switching
