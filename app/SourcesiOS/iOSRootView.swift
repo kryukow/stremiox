@@ -423,10 +423,24 @@ struct iOSSearchView: View {
                 LazyVStack(alignment: .leading, spacing: Theme.Space.lg) {
                     // Stremio's "paste a link" feature, at the top like tvOS.
                     Button { showOpenLink = true } label: {
-                        Label(directLinksOnly ? "Play a direct link" : "Play a link or magnet", systemImage: "link")
+                        Label(PlaybackSettings.directLinksOnly ? "Play a direct link" : "Play a link or magnet", systemImage: "link")
                     }
                     .buttonStyle(ChipButtonStyle(selected: false))
                     .padding(.horizontal, Theme.Space.md)
+
+                    #if STREMIOX_NO_EMBEDDED_SERVER
+                    // Public HLS fixture: proves decoding/network/controls work without relying on
+                    // any third-party stream add-on, movie subscription or peer-to-peer transport.
+                    Button {
+                        if let url = URL(string: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8") {
+                            pastedPlayer = iOSPlayerLaunch(url: url, title: "Тестовый видеопоток · HLS")
+                        }
+                    } label: {
+                        Label("Проверить видеоплеер (HLS)", systemImage: "play.rectangle.on.rectangle")
+                    }
+                    .buttonStyle(ChipButtonStyle(selected: false))
+                    .padding(.horizontal, Theme.Space.md)
+                    #endif
 
                     results
                 }
@@ -791,12 +805,12 @@ private struct iOSOpenLinkView: View {
             Text("Play a link")
                 .font(Theme.Typography.sectionTitle)
                 .foregroundStyle(Theme.Palette.textPrimary)
-            Text(directLinksOnly
+            Text(PlaybackSettings.directLinksOnly
                  ? "A direct video URL (mp4, mkv, m3u8 and friends), a debrid or usenet link your service resolved to http(s)."
                  : "A direct video URL (mp4, mkv, m3u8 and friends), a debrid or usenet link your service resolved to http(s), or a magnet link.")
                 .font(Theme.Typography.body)
                 .foregroundStyle(Theme.Palette.textSecondary)
-            TextField(directLinksOnly ? "https://..." : "https://...  or  magnet:?xt=...", text: $input)
+            TextField(PlaybackSettings.directLinksOnly ? "https://..." : "https://...  or  magnet:?xt=...", text: $input)
                 .font(Theme.Typography.body)
                 .disableAutocorrection(true)
                 .textFieldStyle(.roundedBorder)
