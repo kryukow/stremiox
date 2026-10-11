@@ -944,7 +944,7 @@ struct PlayerScreen: View {
         Button(action: action) {
             HStack(spacing: 7) {
                 Image(systemName: icon).font(.system(size: 15, weight: .semibold))
-                Text(title).font(.subheadline.weight(.medium))
+                Text(title.localizedUI).font(.subheadline.weight(.medium))
             }
             .foregroundStyle(.white)
         }
