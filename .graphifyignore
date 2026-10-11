@@ -1,0 +1,16 @@
+# Graphify source-only audit: exclude generated/vendor data and media assets
+app/Vendor/
+app/build/
+app/Resources/
+app/*.xcodeproj/
+app/*.xcworkspace/
+**/Assets.xcassets/
+**/.build/
+**/target/
+**/node_modules/
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.ttf
+**/*.otf
+**/*.xcframework/
