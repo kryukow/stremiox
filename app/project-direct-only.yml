@@ -22,6 +22,10 @@ targets:
       - Sources/ShareSheet.swift
       - Sources/ExternalPlayer.swift
       - Resources/Assets.xcassets
+      - path: Resources/ru.lproj/Localizable.strings
+        buildPhase: resources
+      - path: Resources/ru.lproj/InfoPlist.strings
+        buildPhase: resources
       - path: Resources/fonts
         optional: true
         type: folder
@@ -35,7 +39,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.kryukow.stremiox.direct
         SWIFT_OBJC_BRIDGING_HEADER: Sources/Player/StremioX-Bridging.h
-        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) STREMIOX_NO_EMBEDDED_SERVER"
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) STREMIOX_NO_EMBEDDED_SERVER STREMIOX_RUSSIAN_UI"
         MARKETING_VERSION: "0.3.0"
         CURRENT_PROJECT_VERSION: "97"
         TARGETED_DEVICE_FAMILY: "1,2"
