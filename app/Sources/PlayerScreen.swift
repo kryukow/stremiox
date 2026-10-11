@@ -956,7 +956,7 @@ struct PlayerScreen: View {
                 .foregroundStyle(.white).padding(11).background(.black.opacity(0.35), in: Circle())
                 .frame(width: 44, height: 44).contentShape(Circle())   // min 44pt tap target (#30)
         }
-        .accessibilityLabel(label)
+        .accessibilityLabel(label.localizedUI)
     }
 
     // MARK: - Skip intro / outro
@@ -973,7 +973,7 @@ struct PlayerScreen: View {
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "forward.fill")
-                        Text(segment.label).fontWeight(.semibold)
+                        Text(segment.label.localizedUI).fontWeight(.semibold)
                     }
                     .padding(.horizontal, 22).padding(.vertical, 12)
                     .foregroundStyle(Theme.Palette.onAccent)
@@ -1200,7 +1200,7 @@ struct PlayerScreen: View {
     private func langName(_ code: String) -> String {
         let c = code.lowercased()
         if c.isEmpty || c == "und" { return "Unknown" }
-        return Locale.current.localizedString(forLanguageCode: c)?.capitalized ?? code.uppercased()
+        return Locale(identifier: "ru_RU").localizedString(forLanguageCode: c)?.capitalized ?? code.uppercased()
     }
 
     // MARK: - Source switching
