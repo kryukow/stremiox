@@ -311,7 +311,7 @@ struct ProfileEditorView: View {
                 // wider than the phone and it clipped on BOTH edges ("ile", "ED Black"). LazyVStack is
                 // greedy on width and pins the column to the viewport. (Systemic fix S1.)
                 LazyVStack(alignment: .leading, spacing: Theme.Space.xl) {
-                    Text(isNew ? "New Profile" : "Edit \(original.name)")
+                    Text(isNew ? "New Profile".localizedUI : "\("Edit".localizedUI) \(original.name)")
                         .font(Theme.Typography.screenTitle)
                         .foregroundStyle(Theme.Palette.textPrimary)
 
