@@ -1,0 +1,131 @@
+name: Build iPhone Direct (no torrents)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - feature/ios-direct-no-p2p
+    paths:
+      - ".github/workflows/ios-direct-only.yml"
+      - "app/project-direct-only.yml"
+      - "app/SourcesShared/CoreModels.swift"
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios-direct:
+    runs-on: macos-15
+    timeout-minutes: 100
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select installed Xcode
+        shell: bash
+        run: |
+          set -euo pipefail
+          XCODE="$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
+          echo "Using $XCODE"
+          sudo xcode-select -s "$XCODE"
+          xcodebuild -version
+
+      - name: Install XcodeGen and Rust target
+        shell: bash
+        run: |
+          brew install xcodegen
+          rustup toolchain install nightly --profile minimal
+          rustup +nightly target add aarch64-apple-ios
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            core/target
+          key: ios-direct-rust-${{ runner.os }}-${{ hashFiles('core/Cargo.lock', 'core/Cargo.toml') }}
+          restore-keys: |
+            ios-direct-rust-${{ runner.os }}-
+
+      - name: Build native Stremio Core for iPhone
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd core
+          SDKROOT="$(xcrun --sdk iphoneos --show-sdk-path)" cargo +nightly build --target aarch64-apple-ios --release
+          mkdir -p ../app/Vendor
+          xcodebuild -create-xcframework \
+            -library target/aarch64-apple-ios/release/libstremiox_core.a \
+            -headers include \
+            -output ../app/Vendor/StremioXCore.xcframework
+
+      - name: Download verified subtitle fonts ONLY
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p app/Resources/fonts
+          curl -fsSL --retry 3 \
+            https://github.com/mamaclapper/StremioX/releases/download/vendor-1/StremioX-subtitle-fonts-v2.zip \
+            -o /tmp/stremiox-fonts.zip
+          echo "11de005861655d43e53979325cdca3172951f93af566b6fc6778e6897dd53dbb  /tmp/stremiox-fonts.zip" | shasum -a 256 -c -
+          unzip -qo /tmp/stremiox-fonts.zip -d app/Resources/fonts
+
+      - name: Enforce no-P2P scheme configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'STREMIOX_NO_EMBEDDED_SERVER' app/project-direct-only.yml
+          if grep -E -q '^[[:space:]]*-[[:space:]]*(Sources/NodeServer\.swift|framework: Vendor/nodejs-mobile/|path: Resources/server\.js)' app/project-direct-only.yml; then
+            echo "P2P component detected in Direct target" >&2
+            exit 1
+          fi
+          if test -d app/Vendor/nodejs-mobile; then
+            echo "Unexpected NodeMobile runtime" >&2
+            exit 1
+          fi
+
+      - name: Generate iOS project
+        shell: bash
+        run: |
+          cd app
+          xcodegen generate --spec project-direct-only.yml
+
+      - name: Build unsigned IPA app
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd app
+          xcodebuild \
+            -project StremioXDirect.xcodeproj \
+            -scheme StremioXiOSDirect \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/direct \
+            CODE_SIGNING_ALLOWED=NO build
+
+      - name: Verify binary and package
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP="app/build/direct/Build/Products/Release-iphoneos/StremioXiOSDirect.app"
+          test -d "$APP"
+          if find "$APP" \( -name '*NodeMobile*' -o -name 'server.js' -o -name 'node-darwin-arm64' \) | grep -q .; then
+            echo "Torrent server files unexpectedly bundled" >&2
+            exit 1
+          fi
+          mkdir -p artifacts/Payload
+          cp -R "$APP" artifacts/Payload/
+          (cd artifacts && zip -qry StremioX-Direct-iOS-unsigned.ipa Payload)
+          (cd artifacts && shasum -a 256 StremioX-Direct-iOS-unsigned.ipa > SHA256SUMS.txt)
+
+      - name: Upload IPA (unsigned, requires signing for installation)
+        uses: actions/upload-artifact@v4
+        with:
+          name: StremioX-Direct-iOS-unsigned
+          path: |
+            artifacts/StremioX-Direct-iOS-unsigned.ipa
+            artifacts/SHA256SUMS.txt
+          retention-days: 14
