@@ -742,7 +742,7 @@ struct PlayerScreen: View {
     }
 
     private var loadErrorHint: String {
-        let base = "It may be uncached on your debrid (still downloading), offline, or an unsupported link. Try another source or go back."
+        let base = "It may be uncached on your debrid (still downloading), offline, or an unsupported link. Try another source or go back.".localizedUI
         return loadErrorMsg.isEmpty ? base : base + "\n\n(\(loadErrorMsg))"
     }
 
@@ -1040,7 +1040,7 @@ struct PlayerScreen: View {
             Color.black.opacity(0.4).ignoresSafeArea().onTapGesture { close() }
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
-                    Text(p.title).font(.headline).foregroundStyle(.white)
+                    Text(p.title.localizedUI).font(.headline).foregroundStyle(.white)
                     Spacer()
                     Button { close() } label: {
                         Image(systemName: "xmark").font(.system(size: 13, weight: .bold))
@@ -1085,12 +1085,12 @@ struct PlayerScreen: View {
                 if let openPanel = panel { panelRows = rows(for: openPanel) }
             } label: {
                 HStack {
-                    Text(row.label).foregroundStyle(.white).lineLimit(1)
+                    Text(row.label.localizedUI).foregroundStyle(.white).lineLimit(1)
                     Spacer()
                     if row.selected {
                         Image(systemName: "checkmark").foregroundStyle(Theme.Palette.accent)
                     } else if !row.detail.isEmpty {
-                        Text(row.detail).font(.subheadline).foregroundStyle(.white.opacity(0.55)).lineLimit(1)
+                        Text(row.detail.localizedUI).font(.subheadline).foregroundStyle(.white.opacity(0.55)).lineLimit(1)
                     }
                 }
                 .padding(.horizontal).padding(.vertical, 13)
