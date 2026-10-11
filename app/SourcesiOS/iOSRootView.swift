@@ -23,6 +23,23 @@ struct iOSRootView: View {
             }
         }
 
+        /// Short labels for seven equally spaced iPhone tabs. Full titles stay in VoiceOver.
+        var compactTitle: String {
+            #if STREMIOX_RUSSIAN_UI
+            switch self {
+            case .home: return "Главная"
+            case .discover: return "Обзор"
+            case .live: return "Эфир"
+            case .library: return "Моё"
+            case .search: return "Поиск"
+            case .addons: return "Плагины"
+            case .settings: return "Опции"
+            }
+            #else
+            return title
+            #endif
+        }
+
         var icon: String {
             switch self {
             case .home: return "house.fill"
@@ -119,7 +136,7 @@ struct iOSRootView: View {
                             Capsule().fill(Theme.Palette.accent.opacity(0.18))
                         }
                     }
-                Text(item.title.localizedUI)
+                Text(item.compactTitle)
                     .font(.system(size: 11, weight: selected ? .semibold : .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
