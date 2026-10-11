@@ -1,0 +1,60 @@
+# iPhone / iPad — Direct Links ONLY. Native P2P engine and NodeMobile are intentionally absent.
+# Derived from upstream StremioXiOSNative and StremioXTVLite (GPL-3.0).
+name: StremioXDirect
+options:
+  bundleIdPrefix: com.kryukow.stremiox
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+packages:
+  MPVKit:
+    url: https://github.com/mpvkit/MPVKit
+    exactVersion: "0.41.0"
+targets:
+  StremioXiOSDirect:
+    type: application
+    platform: iOS
+    sources:
+      - SourcesiOS
+      - SourcesShared
+      - Sources/Player
+      - Sources/PlayerScreen.swift
+      - Sources/ShareSheet.swift
+      - Sources/ExternalPlayer.swift
+      - Resources/Assets.xcassets
+      - path: Resources/fonts
+        optional: true
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: MPVKit
+        product: MPVKit-GPL
+      - framework: Vendor/StremioXCore.xcframework
+        embed: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.kryukow.stremiox.direct
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/Player/StremioX-Bridging.h
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) STREMIOX_NO_EMBEDDED_SERVER"
+        MARKETING_VERSION: "0.3.0"
+        CURRENT_PROJECT_VERSION: "97"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_FILE: Resources/Info-iOS.plist
+        INFOPLIST_KEY_CFBundleDisplayName: StremioX Direct
+        INFOPLIST_KEY_UILaunchScreen_Generation: "YES"
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: "YES"
+        INFOPLIST_KEY_UIStatusBarStyle: UIStatusBarStyleLightContent
+        INFOPLIST_KEY_UIRequiresFullScreen: "YES"
+        CODE_SIGNING_ALLOWED: "YES"
+        CODE_SIGNING_REQUIRED: "NO"
+schemes:
+  StremioXiOSDirect:
+    build:
+      targets:
+        StremioXiOSDirect: all
+    run:
+      config: Debug
+    archive:
+      config: Release
