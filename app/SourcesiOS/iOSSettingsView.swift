@@ -165,7 +165,7 @@ struct iOSSettingsView: View {
             if account.isSignedIn {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(account.email ?? "Signed in")
-                    Text("\(account.addons.count) add-ons · \(account.streamAddonBases.count) stream sources")
+                    Text("\(account.addons.count) доп. · \(account.streamAddonBases.count) источников")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
