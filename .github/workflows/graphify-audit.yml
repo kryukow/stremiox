@@ -25,11 +25,21 @@ jobs:
         run: |
           set -euo pipefail
           graphify app --code-only
-          test -s graphify-out/graph.json
-          test -s graphify-out/GRAPH_REPORT.md
+          test -s app/graphify-out/graph.json
+          # Code-only extraction writes a complete graph. The narrative cluster
+          # report is optional; never reject the graph for missing LLM backend.
+          if [ ! -s app/graphify-out/GRAPH_REPORT.md ]; then
+            graphify cluster-only app || true
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data = json.loads(Path("app/graphify-out/graph.json").read_text())
+          print("Graphify exported graph with top-level keys:", list(data))
+          PY
       - name: Upload audit graph
         uses: actions/upload-artifact@v4
         with:
           name: StremioX-Graphify-Code-Graph
-          path: graphify-out/
+          path: app/graphify-out/
           retention-days: 14
