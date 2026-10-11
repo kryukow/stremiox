@@ -402,8 +402,8 @@ struct iOSDetailView: View {
     }
 
     private func primaryEpisodeLabel(_ video: CoreVideo, isResume: Bool) -> String {
-        let prefix = isResume ? "Resume" : "Play"
-        guard let season = video.season else { return "\(prefix) Episode \(video.episodeNumber)" }
+        let prefix = isResume ? "Resume".localizedUI : "Play".localizedUI
+        guard let season = video.season else { return "\(prefix) \("Episode".localizedUI) \(video.episodeNumber)" }
         return "\(prefix) S\(season) E\(video.episodeNumber)"
     }
 
@@ -456,7 +456,7 @@ struct iOSDetailView: View {
                     HStack(spacing: Theme.Space.sm) {
                         if preparing { ProgressView().tint(Theme.Palette.onAccent) }
                         else { Image(systemName: "play.fill") }
-                        Text(movieLabel)
+                        Text(movieLabel.localizedUI)
                     }
                 }
                 .buttonStyle(PrimaryActionStyle())
@@ -548,7 +548,7 @@ struct iOSDetailView: View {
     private var movieLabel: String {
         if preparing { return "Finding the best source…" }
         guard movieReady, let s = movieBest else { return settleTimedOut ? "No sources found" : "Loading sources…" }
-        return "Watch  ·  \(StreamRanking.qualityLabel(s))"
+        return "\("Watch".localizedUI) · \(StreamRanking.qualityLabel(s))"
     }
 
     private func playMovie() async {
@@ -639,15 +639,15 @@ struct iOSDetailView: View {
     /// One EPG row: an eyebrow tag (NOW / NEXT), the program title, and an optional time detail.
     private func epgRow(eyebrow: String, title: String, detail: String?) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: Theme.Space.sm) {
-            Text(eyebrow)
+            Text(eyebrow.localizedUI)
                 .font(Theme.Typography.eyebrow).tracking(1.5)
                 .foregroundStyle(Theme.Palette.accent)
-            Text(title)
+            Text(title.localizedUI)
                 .font(Theme.Typography.label)
                 .foregroundStyle(Theme.Palette.textPrimary)
                 .lineLimit(1)
             if let detail {
-                Text(detail)
+                Text(detail.localizedUI)
                     .font(Theme.Typography.label)
                     .foregroundStyle(Theme.Palette.textSecondary)
                     .lineLimit(1)
@@ -846,7 +846,7 @@ struct iOSDetailView: View {
             .sorted { $0.episodeNumber < $1.episodeNumber }
     }
 
-    private func seasonLabel(_ s: Int) -> String { s == 0 ? "Specials" : "Season \(s)" }
+    private func seasonLabel(_ s: Int) -> String { s == 0 ? "Specials".localizedUI : "\("Season".localizedUI) \(s)" }
 
     // MARK: Shared
 
@@ -1090,7 +1090,7 @@ private struct iOSRailHeader: View {
             Text(eyebrow.uppercased())
                 .font(Theme.Typography.eyebrow).tracking(1.5)
                 .foregroundStyle(Theme.Palette.accent)
-            Text(title)
+            Text(title.localizedUI)
                 .font(Theme.Typography.sectionTitle)
                 .foregroundStyle(Theme.Palette.textPrimary)
         }
@@ -1406,7 +1406,7 @@ private struct iOSStreamLabel: View {
                 // One trimmed human-readable line for context (the release title), collapsed to a
                 // single line so a verbose multi-line add-on blurb can't bloat the row.
                 if let title = cleanTitle {
-                    Text(title)
+                    Text(title.localizedUI)
                         .font(Theme.Typography.label)
                         .foregroundStyle(Theme.Palette.textSecondary)
                         .lineLimit(1).truncationMode(.middle)
