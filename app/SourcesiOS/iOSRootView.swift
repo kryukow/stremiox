@@ -1034,7 +1034,7 @@ private struct PosterRail: View {
     @EnvironmentObject private var theme: ThemeManager   // observe textScale so Theme.Typography repaints live
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Space.sm) {
-            Text(title).font(Theme.Typography.cardTitle).foregroundStyle(Theme.Palette.textPrimary)
+            Text(title.localizedUI).font(Theme.Typography.cardTitle).foregroundStyle(Theme.Palette.textPrimary)
                 .padding(.horizontal, Theme.Space.md)
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: Theme.Space.sm) {
