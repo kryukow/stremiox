@@ -28,10 +28,10 @@ struct StremioXiOSApp: App {
         // Russian is the preferred spoken language in this personal build.
         // Do not overwrite an explicit choice from a previous session.
         if UserDefaults.standard.string(forKey: TrackPreferences.Key.audio) == nil {
-            UserDefaults.standard.set("ru,en", forKey: TrackPreferences.Key.audio)
+            UserDefaults.standard.set("ru", forKey: TrackPreferences.Key.audio)
         }
         if UserDefaults.standard.string(forKey: TrackPreferences.Key.subtitle) == nil {
-            UserDefaults.standard.set("ru,en", forKey: TrackPreferences.Key.subtitle)
+            UserDefaults.standard.set("ru", forKey: TrackPreferences.Key.subtitle)
         }
         #endif
         #if !STREMIOX_NO_EMBEDDED_SERVER
