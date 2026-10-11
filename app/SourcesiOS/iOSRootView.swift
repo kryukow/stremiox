@@ -119,7 +119,7 @@ struct iOSRootView: View {
                             Capsule().fill(Theme.Palette.accent.opacity(0.18))
                         }
                     }
-                Text(item.title)
+                Text(item.title.localizedUI)
                     .font(.system(size: 11, weight: selected ? .semibold : .medium))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -130,7 +130,7 @@ struct iOSRootView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(item.title)
+        .accessibilityLabel(item.title.localizedUI)
         .accessibilityHint("Switches to \(item.title) tab")
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }
@@ -808,7 +808,7 @@ private struct iOSOpenLinkView: View {
                     .buttonStyle(ChipButtonStyle(selected: false))
             }
             if let status {
-                Text(status)
+                Text(status.localizedUI)
                     .font(Theme.Typography.label)
                     .foregroundStyle(working ? Theme.Palette.textSecondary : Theme.Palette.danger)
             }
@@ -1149,7 +1149,7 @@ extension View {
     /// conditional lives *inside* `@ToolbarContentBuilder` — branching the whole view instead would
     /// change the NavigationStack's structural identity and reset its scroll/path on every tab switch.
     func stremioWordmarkTitle(_ pageTitle: String, isActive: Bool = true) -> some View {
-        navigationTitle(pageTitle)
+        navigationTitle(pageTitle.localizedUI)
             .navigationBarTitleDisplayModeInlineCompat()
             .toolbar {
                 if isActive {
@@ -1204,11 +1204,11 @@ struct ContentUnavailableViewCompat: View {
     var body: some View {
         VStack(spacing: Theme.Space.md) {
             Image(systemName: systemImage).font(.system(size: 48)).foregroundStyle(Theme.Palette.textTertiary)
-            Text(title).font(Theme.Typography.sectionTitle).foregroundStyle(Theme.Palette.textPrimary)
-            Text(message).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
+            Text(title.localizedUI).font(Theme.Typography.sectionTitle).foregroundStyle(Theme.Palette.textPrimary)
+            Text(message.localizedUI).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
                 .multilineTextAlignment(.center)
             if let cta {
-                Button(cta.title, action: cta.action).buttonStyle(PrimaryActionStyle())
+                Button(cta.title.localizedUI, action: cta.action).buttonStyle(PrimaryActionStyle())
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
