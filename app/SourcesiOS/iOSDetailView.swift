@@ -312,17 +312,22 @@ struct iOSDetailView: View {
     /// Rating · year · runtime · genres, same order and tokens as tvOS DetailView.metaRow.
     private var metaRow: some View {
         let m = meta
-        return HStack(spacing: Theme.Space.md) {
-            if let imdb = m?.imdbRating {
-                HStack(spacing: 6) {
-                    Image(systemName: "star.fill").foregroundStyle(Theme.Palette.accent)
-                    Text(imdb)
+        return VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            HStack(spacing: Theme.Space.md) {
+                if let imdb = m?.imdbRating {
+                    HStack(spacing: 6) {
+                        Image(systemName: "star.fill").foregroundStyle(Theme.Palette.accent)
+                        Text(imdb)
+                    }
                 }
+                if let r = m?.releaseInfo { Text(r).lineLimit(1) }
+                if let rt = m?.runtime { Text(rt).lineLimit(1) }
             }
-            if let r = m?.releaseInfo { Text(r) }
-            if let rt = m?.runtime { Text(rt) }
             let genres = m?.genres ?? []
-            if !genres.isEmpty { Text(genres.prefix(3).joined(separator: " · ")).lineLimit(1) }
+            if !genres.isEmpty {
+                Text(genres.prefix(3).joined(separator: " · "))
+                    .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .font(Theme.Typography.label)
         .foregroundStyle(Theme.Palette.textSecondary)
@@ -344,30 +349,35 @@ struct iOSDetailView: View {
     /// resume episode is partially watched), then the trailer + library chips — the touch/Mac twin
     /// of the tvOS series hero. Tapping it pushes that episode's source list (the same screen an
     /// episode-row tap opens), so the user still picks the source.
+    /// Two-row responsive actions: the primary Play button never competes for width
+    /// with the trailer and library controls on compact iPhones.
     @ViewBuilder private var seriesHeroActions: some View {
         let primary = meta?.videos.flatMap { seriesPrimaryEpisode($0) }
         let primaryProgress = primary.map { episodeProgress($0.video) } ?? 0
-        VStack(alignment: .leading, spacing: Theme.Space.xs) {
-            HStack(spacing: Theme.Space.sm) {
-                if let m = meta, let primary {
-                    VStack(alignment: .leading, spacing: Theme.Space.xs) {
-                        NavigationLink {
-                            iOSEpisodeStreams(meta: m, video: primary.video, season: primary.video.season ?? 1)
-                        } label: {
-                            Label(primaryEpisodeLabel(primary.video, isResume: primary.isResume),
-                                  systemImage: "play.fill")
-                        }
-                        .buttonStyle(PrimaryActionStyle())
-                        if primary.isResume, primaryProgress > 0.01 {
-                            iOSProgressStripe(value: primaryProgress)
-                                .frame(width: 160)
-                        }
+        VStack(alignment: .leading, spacing: Theme.Space.sm) {
+            if let m = meta, let primary {
+                VStack(alignment: .leading, spacing: Theme.Space.xs) {
+                    NavigationLink {
+                        iOSEpisodeStreams(meta: m, video: primary.video, season: primary.video.season ?? 1)
+                    } label: {
+                        Label(primaryEpisodeLabel(primary.video, isResume: primary.isResume), systemImage: "play.fill")
                     }
-                    .fixedSize(horizontal: true, vertical: false)
+                    .buttonStyle(PrimaryActionStyle())
+                    if primary.isResume, primaryProgress > 0.01 {
+                        iOSProgressStripe(value: primaryProgress).frame(width: 160)
+                    }
                 }
-                trailerButton
-                iOSLibraryChip()
-                Spacer(minLength: 0)
+            }
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: Theme.Space.sm) {
+                    trailerButton
+                    iOSLibraryChip()
+                }
+                .fixedSize(horizontal: true, vertical: false)
+                VStack(alignment: .leading, spacing: Theme.Space.sm) {
+                    trailerButton
+                    iOSLibraryChip()
+                }
             }
         }
         .padding(.top, Theme.Space.xs)
@@ -465,16 +475,24 @@ struct iOSDetailView: View {
 
                 qualityMenu(groups)
             }
-            HStack(spacing: Theme.Space.sm) {
+            // The original horizontal row overflows on portrait iPhone screens.
+            VStack(alignment: .leading, spacing: Theme.Space.sm) {
                 Button { scrollToSources() } label: {
-                    Label(sourceTotal > 0 ? "Sources · \(sourceTotal)" : "Sources",
+                    Label(sourceTotal > 0 ? "Источники · \(sourceTotal)" : "Источники",
                           systemImage: "list.bullet")
                 }
                 .buttonStyle(ChipButtonStyle())
-
-                trailerButton
-                iOSLibraryChip()
-                Spacer(minLength: 0)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: Theme.Space.sm) {
+                        trailerButton
+                        iOSLibraryChip()
+                    }
+                    .fixedSize(horizontal: true, vertical: false)
+                    VStack(alignment: .leading, spacing: Theme.Space.sm) {
+                        trailerButton
+                        iOSLibraryChip()
+                    }
+                }
             }
         }
         .padding(.top, Theme.Space.xs)
@@ -1000,7 +1018,6 @@ struct iOSEpisodeStreams: View {
             default: Theme.Palette.surface1
             }
         }
-        .frame(height: backdropHeight)
         // Bound the resizable image to the actual viewport, not its unconstrained aspect-fill width.
         .frame(width: geometry.size.width, height: backdropHeight)
         .clipped()
@@ -1021,18 +1038,23 @@ struct iOSEpisodeStreams: View {
     }
 
     private var metaRow: some View {
-        HStack(spacing: Theme.Space.md) {
-            Text("S\(season) · E\(video.episode ?? 0)")
-            if let released = video.released, released.count >= 10 { Text(String(released.prefix(10))) }
-            if let rt = meta.runtime { Text(rt) }
-            if let imdb = meta.imdbRating {
-                HStack(spacing: 6) {
-                    Image(systemName: "star.fill").foregroundStyle(Theme.Palette.accent)
-                    Text(imdb)
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            HStack(spacing: Theme.Space.md) {
+                Text("S\(season) · E\(video.episode ?? 0)")
+                if let released = video.released, released.count >= 10 { Text(String(released.prefix(10))) }
+                if let rt = meta.runtime { Text(rt).lineLimit(1) }
+                if let imdb = meta.imdbRating {
+                    HStack(spacing: 6) {
+                        Image(systemName: "star.fill").foregroundStyle(Theme.Palette.accent)
+                        Text(imdb)
+                    }
                 }
             }
             let genres = meta.genres
-            if !genres.isEmpty { Text(genres.prefix(3).joined(separator: " · ")).lineLimit(1) }
+            if !genres.isEmpty {
+                Text(genres.prefix(3).joined(separator: " · "))
+                    .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .font(Theme.Typography.label)
         .foregroundStyle(Theme.Palette.textSecondary)
