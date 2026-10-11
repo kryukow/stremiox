@@ -24,7 +24,7 @@ jobs:
       - name: Build Swift code knowledge graph
         run: |
           set -euo pipefail
-          graphify app
+          graphify app --code-only
           test -s graphify-out/graph.json
           test -s graphify-out/GRAPH_REPORT.md
       - name: Upload audit graph
