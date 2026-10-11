@@ -1,0 +1,35 @@
+name: Graphify Swift architecture audit
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/ios-direct-no-p2p
+    paths:
+      - ".github/workflows/graphify-audit.yml"
+      - ".graphifyignore"
+permissions:
+  contents: read
+jobs:
+  graphify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install official Graphify
+        run: python -m pip install --disable-pip-version-check graphifyy
+      - name: Build Swift code knowledge graph
+        run: |
+          set -euo pipefail
+          graphify app
+          test -s graphify-out/graph.json
+          test -s graphify-out/GRAPH_REPORT.md
+      - name: Upload audit graph
+        uses: actions/upload-artifact@v4
+        with:
+          name: StremioX-Graphify-Code-Graph
+          path: graphify-out/
+          retention-days: 14
