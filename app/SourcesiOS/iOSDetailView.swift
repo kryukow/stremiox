@@ -478,7 +478,7 @@ struct iOSDetailView: View {
             // The original horizontal row overflows on portrait iPhone screens.
             VStack(alignment: .leading, spacing: Theme.Space.sm) {
                 Button { scrollToSources() } label: {
-                    Label(sourceTotal > 0 ? "Источники · \(sourceTotal)" : "Источники",
+                    Label(sourceTotal > 0 ? "\("Sources".localizedUI) · \(sourceTotal)" : "Sources".localizedUI,
                           systemImage: "list.bullet")
                 }
                 .buttonStyle(ChipButtonStyle())
@@ -1114,7 +1114,7 @@ private struct iOSRailHeader: View {
     let title: String
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(eyebrow.uppercased())
+            Text(eyebrow.localizedUI.uppercased())
                 .font(Theme.Typography.eyebrow).tracking(1.5)
                 .foregroundStyle(Theme.Palette.accent)
             Text(title.localizedUI)
@@ -1388,8 +1388,13 @@ struct iOSSourceList: View {
 
     private var eyebrow: String {
         let count = streamCount
+        #if STREMIOX_RUSSIAN_UI
+        if count == 0 { return loading ? "Поиск" : "Не найдено" }
+        return loading ? "Найдено: \(count)" : "Источников: \(count)"
+        #else
         if count == 0 { return loading ? "Searching" : "None found" }
         return loading ? "\(count) so far" : "\(count) source\(count == 1 ? "" : "s")"
+        #endif
     }
 }
 
@@ -1470,7 +1475,7 @@ private struct iOSLoadingRow: View {
     var body: some View {
         HStack(spacing: Theme.Space.sm) {
             ProgressView().tint(Theme.Palette.accent)
-            Text(text).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
+            Text(text.localizedUI).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
             Spacer(minLength: 0)
         }
         .padding(Theme.Space.md)
@@ -1485,7 +1490,7 @@ private struct iOSEmptyRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: Theme.Space.sm) {
             Image(systemName: "exclamationmark.triangle").foregroundStyle(Theme.Palette.textTertiary)
-            Text(text).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
+            Text(text.localizedUI).font(Theme.Typography.body).foregroundStyle(Theme.Palette.textSecondary)
             Spacer(minLength: 0)
         }
         .padding(Theme.Space.md)
