@@ -109,8 +109,9 @@ struct iOSDetailView: View {
     }
 
     var body: some View {
-        ScrollViewReader { proxy in
-            ScrollView {
+        GeometryReader { viewport in
+            ScrollViewReader { proxy in
+                ScrollView {
                 VStack(alignment: .leading, spacing: Theme.Space.lg) {
                     // Live (tv / channel / events) gets its own stripped-down page BEFORE the movie
                     // fallback: backdrop + name + LIVE badge + the channel's source list, with no VOD
@@ -133,7 +134,8 @@ struct iOSDetailView: View {
                 // Cap the whole detail column to the viewport width and pin it leading, so no single
                 // section (hero, season chips, source rows) can stretch the column wider than the
                 // screen and center it, which clipped every leading element off the left edge.
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(width: viewport.size.width, alignment: .leading)
+            }
             }
         }
         .background(Theme.Palette.canvas.ignoresSafeArea())
@@ -248,18 +250,14 @@ struct iOSDetailView: View {
     /// Full-bleed artwork with the same two scrims tvOS uses: a vertical canvas fade so the lower text
     /// block stays readable, and a leading canvas fade for the title column.
     private var backdrop: some View {
+        GeometryReader { geometry in
         AsyncImage(url: URL(string: meta?.background ?? meta?.poster ?? "")) { phase in
             switch phase {
             case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
             default: Theme.Palette.surface1
             }
         }
-        .frame(height: backdropHeight)
-        // The backdrop is the ZStack's WIDTH ANCHOR: it greedily takes the full viewport width and
-        // pins to the leading edge, so the ZStack's leading edge is the screen's leading edge. Before
-        // this, the oversized serif hero title made the ZStack wider than the screen and `.bottomLeading`
-        // pushed the whole block to a negative x — clipping the title / Watch / synopsis off the left.
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(width: geometry.size.width, height: backdropHeight)
         .clipped()
         .overlay(
             LinearGradient(stops: [
@@ -273,6 +271,8 @@ struct iOSDetailView: View {
             LinearGradient(colors: [Theme.Palette.canvas.opacity(0.6), .clear],
                            startPoint: .leading, endPoint: .center)
         )
+        }
+        .frame(height: backdropHeight)
     }
 
     /// The title block: the addon-provided logo when present (the editorial signature on the tvOS hero),
@@ -906,7 +906,8 @@ struct iOSEpisodeStreams: View {
     }
 
     var body: some View {
-        ScrollView {
+        GeometryReader { viewport in
+            ScrollView {
             VStack(alignment: .leading, spacing: Theme.Space.lg) {
                 hero
                 iOSSourceList(
@@ -920,7 +921,8 @@ struct iOSEpisodeStreams: View {
                 .padding(.horizontal, Theme.Space.md)
             }
             .padding(.bottom, Theme.Space.xl)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(width: viewport.size.width, alignment: .leading)
+            }
         }
         .background(Theme.Palette.canvas.ignoresSafeArea())
         .navigationTitle(video.episodeTitle)
@@ -991,6 +993,7 @@ struct iOSEpisodeStreams: View {
     }
 
     private var backdrop: some View {
+        GeometryReader { geometry in
         AsyncImage(url: URL(string: video.thumbnail ?? meta.background ?? meta.poster ?? "")) { phase in
             switch phase {
             case .success(let img): img.resizable().aspectRatio(contentMode: .fill)
@@ -998,8 +1001,8 @@ struct iOSEpisodeStreams: View {
             }
         }
         .frame(height: backdropHeight)
-        // Width anchor for the episode hero ZStack — full viewport width, pinned leading (see iOSDetailView.backdrop).
-        .frame(maxWidth: .infinity, alignment: .leading)
+        // Bound the resizable image to the actual viewport, not its unconstrained aspect-fill width.
+        .frame(width: geometry.size.width, height: backdropHeight)
         .clipped()
         .overlay(
             LinearGradient(stops: [
@@ -1013,6 +1016,8 @@ struct iOSEpisodeStreams: View {
             LinearGradient(colors: [Theme.Palette.canvas.opacity(0.6), .clear],
                            startPoint: .leading, endPoint: .center)
         )
+        }
+        .frame(height: backdropHeight)
     }
 
     private var metaRow: some View {
