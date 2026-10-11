@@ -303,3 +303,7 @@
 "Stream" = "Видеопоток";
 "Fetching torrent info… this can take up to a minute" = "Получение информации о торренте…";
 "Could not fetch the torrent. No reachable peers, or a dead magnet." = "Не удалось получить торрент.";
+"Skip Intro" = "Пропустить заставку";
+"Skip Recap" = "Пропустить краткое содержание";
+"Skip Credits" = "Пропустить титры";
+"Skip Preview" = "Пропустить анонс";
