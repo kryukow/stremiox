@@ -101,7 +101,7 @@ struct LinkLoginView: View {
 
     @ViewBuilder private var statusText: some View {
         if !status.isEmpty {
-            Text(status)
+            Text(status.localizedUI)
                 .font(Theme.Typography.label)
                 .foregroundStyle(Theme.Palette.textSecondary)
         }
