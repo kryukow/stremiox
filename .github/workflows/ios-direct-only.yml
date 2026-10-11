@@ -9,7 +9,11 @@ on:
     paths:
       - ".github/workflows/ios-direct-only.yml"
       - "app/project-direct-only.yml"
-      - "app/SourcesShared/CoreModels.swift"
+      - "app/SourcesShared/**"
+      - "app/SourcesiOS/**"
+      - "app/Sources/Player/**"
+      - "app/Sources/PlayerScreen.swift"
+      - "app/Resources/ru.lproj/**"
 
 permissions:
   contents: read
