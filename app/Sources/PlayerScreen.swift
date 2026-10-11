@@ -723,7 +723,7 @@ struct PlayerScreen: View {
             Color.black.opacity(0.92).ignoresSafeArea()
             VStack(spacing: 18) {
                 Image(systemName: "exclamationmark.triangle.fill").font(.system(size: 46)).foregroundStyle(.yellow)
-                Text(sourceHops > 0 ? "Tried \(sourceHops + 1) sources, none worked" : "This source didn't load")
+                Text(sourceHops > 0 ? "Проверено источников: \(sourceHops + 1). Ни один не работает" : "This source didn't load".localizedUI)
                     .font(.title3.weight(.semibold)).foregroundStyle(.white)
                 Text(loadErrorHint).font(.callout).foregroundStyle(.white.opacity(0.75))
                     .multilineTextAlignment(.center).frame(maxWidth: 480).fixedSize(horizontal: false, vertical: true)
